@@ -1,26 +1,84 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-sans: var(--font-plus-jakarta-sans), ui-sans-serif, system-ui, sans-serif;
+
+  /* Primary (Teal): #0D9488 mapped to blue scale used in UI */
+  --color-blue-50: #f0fdfa;
+  --color-blue-100: #ccfbf1;
+  --color-blue-200: #99f6e4;
+  --color-blue-300: #5eead4;
+  --color-blue-400: #2dd4bf;
+  --color-blue-500: #0D9488;
+  --color-blue-600: #0f766e;
+  --color-blue-700: #115e59;
+  
+  /* Tertiary (Rust/Orange): #C36D4B mapped to orange scale */
+  --color-orange-50: #fef5f2;
+  --color-orange-100: #fde8e1;
+  --color-orange-200: #fad1c3;
+  --color-orange-400: #e38c6d;
+  --color-orange-500: #C36D4B;
+  --color-orange-600: #a35639;
+
+  /* Secondary (Indigo): #6366F1 mapped to pink/purple scale for gradients */
+  --color-pink-500: #6366F1;
+  --color-pink-600: #4f46e5;
+  --color-purple-500: #818cf8;
+
+  /* Neutral: #64748B mapped to slate */
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748B;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+
+  --color-emerald-50: #ecfdf5;
+  --color-emerald-500: #10b981;
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #f8fafc;
+    --foreground: #1e293b;
+    --card: #ffffff;
+    --card-foreground: #1e293b;
+    --border: #e2e8f0;
+    --primary: #0D9488;
+    --primary-foreground: #ffffff;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+}
+
+@layer utilities {
+  .bg-warm-gradient {
+    background: linear-gradient(135deg, #eff6ff 0%, #fff7ed 100%);
+  }
+  .bg-card-gradient {
+    background: linear-gradient(to bottom right, #ffffff, #f8fafc);
+  }
+  .shadow-soft {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  }
+  .shadow-soft-hover {
+    box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.08);
+  }
 }
