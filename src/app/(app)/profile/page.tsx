@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, UserCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, UserCircle, Loader2, UploadCloud } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ProfilePage() {
@@ -17,6 +17,8 @@ export default function ProfilePage() {
   const [theme, setTheme] = useState("warm");
   const [isSaved, setIsSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -69,6 +71,39 @@ export default function ProfilePage() {
     }
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    setUploadError("");
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploadingAvatar(true);
+    const supabase = createClient();
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${user.id}-${Date.now()}.${fileExt || "png"}`;
+    const filePath = `profiles/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      console.error("Avatar upload failed", uploadError);
+      setUploadError(uploadError.message || "Could not upload profile image. Please try again.");
+      setUploadingAvatar(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
+    if (data?.publicUrl) {
+      setAvatar(data.publicUrl);
+    } else {
+      console.error("Could not get public URL for avatar", filePath);
+      setUploadError("Could not get uploaded image URL.");
+    }
+
+    setUploadingAvatar(false);
+  };
+
   if (profileLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -104,16 +139,32 @@ export default function ProfilePage() {
                   <UserCircle className="w-12 h-12" />
                 </div>
               )}
-              <div className="flex-1 space-y-2 w-full">
-                <label className="text-sm font-medium text-slate-700">Profile Photo URL</label>
-                <input 
-                  type="url" 
-                  value={avatar}
-                  onChange={(e) => setAvatar(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
-                />
-                <p className="text-xs text-slate-500">Paste an image URL to update your avatar.</p>
+              <div className="flex-1 space-y-3 w-full">
+                <label className="text-sm font-medium text-slate-700">Profile Photo</label>
+                <div className="space-y-2">
+                  <input 
+                    type="url" 
+                    value={avatar}
+                    onChange={(e) => setAvatar(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                  />
+                  <div className="flex items-center gap-3">
+                    <label className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100">
+                      <UploadCloud className="w-4 h-4 mr-2" />
+                      <span>{uploadingAvatar ? "Uploading…" : "Upload Image"}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleAvatarUpload}
+                        disabled={uploadingAvatar}
+                      />
+                    </label>
+                    {uploadError && <span className="text-sm text-rose-600">{uploadError}</span>}
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500">Upload a photo or paste an image URL. Uploaded images are stored in Supabase storage.</p>
               </div>
             </div>
 

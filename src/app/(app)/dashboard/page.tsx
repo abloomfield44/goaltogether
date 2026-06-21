@@ -19,6 +19,8 @@ export default function DashboardPage() {
   const [goals, setGoals] = useState<any[]>([]);
   const [wins, setWins] = useState<any[]>([]);
   const [groupWins, setGroupWins] = useState<any[]>([]);
+  const [highFiveCounts, setHighFiveCounts] = useState<Record<string, number>>({});
+  const [userHighFived, setUserHighFived] = useState<Record<string, boolean>>({});
 
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationMessage, setCelebrationMessage] = useState("Personal Goal Completed! 🎉");
@@ -81,6 +83,7 @@ export default function DashboardPage() {
           .neq("user_id", user.id);
 
         const peerIds = peerMembers?.map((pm: any) => pm.user_id) || [];
+        let peerWins: any[] = [];
         if (peerIds.length > 0) {
           const { data: pWins } = await supabase
             .from("wins")
@@ -88,7 +91,27 @@ export default function DashboardPage() {
             .in("owner_id", peerIds)
             .order("date", { ascending: false });
           
-          setGroupWins(pWins || []);
+          peerWins = pWins || [];
+          setGroupWins(peerWins);
+        }
+
+        // Fetch high-fives for all relevant wins (own + group)
+        const allWinIds = [ ...(winsData || []).map((w:any) => w.id), ...peerWins.map((w:any) => w.id) ];
+        if (allWinIds.length > 0) {
+          const { data: hfData } = await supabase
+            .from("wins_high_fives")
+            .select("*")
+            .in("win_id", allWinIds);
+
+          const counts: Record<string, number> = {};
+          const userMap: Record<string, boolean> = {};
+          (hfData || []).forEach((hf: any) => {
+            counts[hf.win_id] = (counts[hf.win_id] || 0) + 1;
+            if (hf.user_id === user.id) userMap[hf.win_id] = true;
+          });
+
+          setHighFiveCounts(counts);
+          setUserHighFived(userMap);
         }
       }
 
@@ -202,6 +225,33 @@ export default function DashboardPage() {
       setWins((current) => [newWin, ...current]);
       setCelebrationMessage("Win Added! Sparkle on! ✨");
       setShowCelebration(true);
+    }
+  };
+
+  const handleToggleHighFive = async (winId: string) => {
+    if (!userProfile) return;
+    const supabase = createClient();
+    const has = userHighFived[winId];
+    if (has) {
+      const { error } = await supabase
+        .from("wins_high_fives")
+        .delete()
+        .eq("win_id", winId)
+        .eq("user_id", userProfile.id);
+      if (!error) {
+        setHighFiveCounts((prev) => ({ ...prev, [winId]: Math.max(0, (prev[winId] || 1) - 1) }));
+        setUserHighFived((prev) => ({ ...prev, [winId]: false }));
+      }
+    } else {
+      const { data, error } = await supabase
+        .from("wins_high_fives")
+        .insert({ win_id: winId, user_id: userProfile.id })
+        .select()
+        .single();
+      if (!error) {
+        setHighFiveCounts((prev) => ({ ...prev, [winId]: (prev[winId] || 0) + 1 }));
+        setUserHighFived((prev) => ({ ...prev, [winId]: true }));
+      }
     }
   };
 
@@ -370,11 +420,22 @@ export default function DashboardPage() {
             {wins.map((win) => (
               <Card key={win.id} className="bg-gradient-to-br from-orange-50 to-pink-50 border-orange-100 shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
-                  <p className="font-medium text-slate-800 mb-2">{win.title}</p>
-                  <p className="text-xs text-slate-500">
-                    {new Date(win.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                  </p>
-                </CardContent>
+                    <p className="font-medium text-slate-800 mb-2">{win.title}</p>
+                    <p className="text-xs text-slate-500">
+                      {new Date(win.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                    </p>
+                    <div className="mt-3 flex items-center gap-3">
+                      <Button
+                        size="sm"
+                        variant={userHighFived[win.id] ? "secondary" : "default"}
+                        onClick={() => handleToggleHighFive(win.id)}
+                        className="px-3"
+                      >
+                        🙌 {highFiveCounts[win.id] || 0}
+                      </Button>
+                      <span className="text-sm text-slate-500">{(highFiveCounts[win.id] || 0) === 1 ? 'high-five' : 'high-fives'}</span>
+                    </div>
+                  </CardContent>
               </Card>
             ))}
             {wins.length === 0 && (
@@ -408,6 +469,17 @@ export default function DashboardPage() {
                   <p className="text-xs text-slate-500">
                     {new Date(win.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                   </p>
+                  <div className="mt-3 flex items-center gap-3">
+                    <Button
+                      size="sm"
+                      variant={userHighFived[win.id] ? "secondary" : "default"}
+                      onClick={() => handleToggleHighFive(win.id)}
+                      className="px-3"
+                    >
+                      🙌 {highFiveCounts[win.id] || 0}
+                    </Button>
+                    <span className="text-sm text-slate-500">{(highFiveCounts[win.id] || 0) === 1 ? 'person engaged' : 'people engaged'}</span>
+                  </div>
                 </CardContent>
               </Card>
             ))}

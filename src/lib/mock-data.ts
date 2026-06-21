@@ -22,6 +22,7 @@ export type Win = {
   title: string;
   owner_id: string;
   date: string;
+  high_fives?: string[];
 };
 
 export type Group = {
@@ -131,17 +132,20 @@ export const MOCK_WINS: Win[] = [
     title: 'Finished packing for our move 📦',
     owner_id: 'u1',
     date: new Date().toISOString(),
+    high_fives: [],
   },
   {
     id: 'w2',
     title: 'Got a promotion at work! 🚀',
     owner_id: 'u1',
     date: new Date(Date.now() - 86400000 * 2).toISOString(),
+    high_fives: [],
   },
   {
     id: 'w3',
     title: 'Ran my first 5k today! 🏃‍♀️',
     owner_id: 'u2',
     date: new Date().toISOString(),
+    high_fives: [],
   }
 ];
