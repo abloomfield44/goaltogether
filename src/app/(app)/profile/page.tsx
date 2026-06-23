@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, UserCircle, Loader2, UploadCloud } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "@/components/ThemeProvider";
 
 export default function ProfilePage() {
+  const { theme: appTheme, setTheme: setAppTheme } = useTheme();
   const [profileLoading, setProfileLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [name, setName] = useState("");
@@ -39,14 +41,22 @@ export default function ProfilePage() {
           setName(profileData.name || "");
           setEmail(profileData.email || authUser.email || "");
           setAvatar(profileData.avatar || "");
-          setTheme(profileData.color_scheme || "warm");
+          const profileTheme = profileData.color_scheme || "warm";
+          setTheme(profileTheme);
+          setAppTheme(profileTheme);
         }
       }
       setProfileLoading(false);
     };
 
     fetchProfile();
-  }, []);
+  }, [setAppTheme]);
+
+  useEffect(() => {
+    if (appTheme !== theme) {
+      setTheme(appTheme);
+    }
+  }, [appTheme]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,8 +125,8 @@ export default function ProfilePage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl mx-auto">
       <header>
-        <h1 className="text-3xl font-bold text-slate-800">Your Profile</h1>
-        <p className="text-slate-500 mt-1">Manage your account settings and preferences.</p>
+        <h1 className="text-3xl font-bold text-theme-foreground">Your Profile</h1>
+        <p className="text-theme-muted mt-1">Manage your account settings and preferences.</p>
       </header>
 
       <Card>
@@ -135,22 +145,22 @@ export default function ProfilePage() {
                   className="w-24 h-24 rounded-full border-4 border-white shadow-sm object-cover"
                 />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-slate-100 border-4 border-white shadow-sm flex items-center justify-center text-slate-400">
+                <div className="w-24 h-24 rounded-full bg-theme-surface border-4 border-white shadow-sm flex items-center justify-center text-theme-muted">
                   <UserCircle className="w-12 h-12" />
                 </div>
               )}
               <div className="flex-1 space-y-3 w-full">
-                <label className="text-sm font-medium text-slate-700">Profile Photo</label>
+                <label className="text-sm font-medium text-theme-muted">Profile Photo</label>
                 <div className="space-y-2">
                   <input 
                     type="url" 
                     value={avatar}
                     onChange={(e) => setAvatar(e.target.value)}
                     placeholder="https://..."
-                    className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                    className="w-full p-2 border border-theme rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-theme-card text-theme-foreground"
                   />
                   <div className="flex items-center gap-3">
-                    <label className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100">
+                    <label className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-theme-foreground bg-theme-card border border-theme rounded-lg cursor-pointer hover:bg-theme-surface">
                       <UploadCloud className="w-4 h-4 mr-2" />
                       <span>{uploadingAvatar ? "Uploading…" : "Upload Image"}</span>
                       <input
@@ -164,40 +174,43 @@ export default function ProfilePage() {
                     {uploadError && <span className="text-sm text-rose-600">{uploadError}</span>}
                   </div>
                 </div>
-                <p className="text-xs text-slate-500">Upload a photo or paste an image URL. Uploaded images are stored in Supabase storage.</p>
+                <p className="text-xs text-theme-muted">Upload a photo or paste an image URL. Uploaded images are stored in Supabase storage.</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Name</label>
+                  <label className="text-sm font-medium text-theme-muted">Name</label>
                   <input 
                     type="text" 
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                    className="w-full p-2 border border-theme rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-theme-card text-theme-foreground"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Email Address (Read-only)</label>
+                  <label className="text-sm font-medium text-theme-muted">Email Address (Read-only)</label>
                   <input 
                     type="email" 
                     value={email}
                     disabled
-                    className="w-full p-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed"
+                    className="w-full p-2 border border-theme rounded-lg bg-theme-surface text-theme-muted cursor-not-allowed"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="pt-6 border-t border-slate-100">
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">Color Scheme</h3>
+            <div className="pt-6 border-t border-theme">
+              <h3 className="text-lg font-semibold text-theme-foreground mb-4">Color Scheme</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <button
                   type="button"
-                  onClick={() => setTheme("warm")}
+                  onClick={() => {
+                    setTheme("warm");
+                    setAppTheme("warm");
+                  }}
                   className={`p-4 rounded-xl border-2 text-left transition-all ${
                     theme === "warm" ? "border-teal-500 bg-teal-50/50" : "border-slate-200 hover:border-teal-300"
                   }`}
@@ -207,7 +220,10 @@ export default function ProfilePage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setTheme("cool")}
+                  onClick={() => {
+                    setTheme("cool");
+                    setAppTheme("cool");
+                  }}
                   className={`p-4 rounded-xl border-2 text-left transition-all ${
                     theme === "cool" ? "border-indigo-500 bg-indigo-50/50" : "border-slate-200 hover:border-indigo-300"
                   }`}
@@ -217,7 +233,10 @@ export default function ProfilePage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setTheme("dark")}
+                  onClick={() => {
+                    setTheme("dark");
+                    setAppTheme("dark");
+                  }}
                   className={`p-4 rounded-xl border-2 text-left transition-all ${
                     theme === "dark" ? "border-slate-800 bg-slate-100" : "border-slate-200 hover:border-slate-400"
                   }`}
