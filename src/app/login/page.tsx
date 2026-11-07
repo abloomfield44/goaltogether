@@ -15,6 +15,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(searchParams.get("error") || "");
+  const [message, setMessage] = useState(searchParams.get("message") || "");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +57,11 @@ function LoginForm() {
               {error}
             </div>
           )}
+          {message && !error && (
+            <div className="bg-emerald-50 text-emerald-700 text-sm p-3 rounded-xl border border-emerald-100 font-medium">
+              {message}
+            </div>
+          )}
           
           <div className="space-y-1">
             <label className="text-sm font-semibold text-slate-700">Email Address</label>
@@ -70,7 +76,12 @@ function LoginForm() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-semibold text-slate-700">Password</label>
+            <div className="flex items-center justify-between gap-3">
+              <label className="text-sm font-semibold text-slate-700">Password</label>
+              <Link href="/forgot-password" className="text-xs font-semibold text-teal-600 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
             <input
               type="password"
               required
