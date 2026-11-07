@@ -5,12 +5,12 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, UserCircle, Loader2, UploadCloud } from "lucide-react";
+import { CheckCircle2, UserCircle, Loader2, UploadCloud, LockKeyhole } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/components/ThemeProvider";
 
 export default function ProfilePage() {
-  const { theme: appTheme, setTheme: setAppTheme } = useTheme();
+  const { setTheme: setAppTheme } = useTheme();
   const [profileLoading, setProfileLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [name, setName] = useState("");
@@ -19,6 +19,11 @@ export default function ProfilePage() {
   const [theme, setTheme] = useState("warm");
   const [isSaved, setIsSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
@@ -51,12 +56,6 @@ export default function ProfilePage() {
 
     fetchProfile();
   }, [setAppTheme]);
-
-  useEffect(() => {
-    if (appTheme !== theme) {
-      setTheme(appTheme);
-    }
-  }, [appTheme]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +111,38 @@ export default function ProfilePage() {
     }
 
     setUploadingAvatar(false);
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setPasswordError("");
+
+    if (password.length < 6) {
+      setPasswordError("Your password must be at least 6 characters long.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+      return;
+    }
+
+    setPasswordSaving(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({ password });
+    setPasswordSaving(false);
+
+    if (error) {
+      setPasswordError(error.message || "There was a problem updating your password.");
+      return;
+    }
+
+    setPasswordSuccess(true);
+    setPassword("");
+    setConfirmPassword("");
+    setTimeout(() => setPasswordSuccess(false), 3000);
   };
 
   if (profileLoading) {
@@ -263,6 +294,64 @@ export default function ProfilePage() {
               </AnimatePresence>
               <Button type="submit" size="lg" disabled={saving} className="w-full sm:w-auto px-8 bg-teal-600 hover:bg-teal-700">
                 {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Save Changes"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <LockKeyhole className="w-5 h-5 text-teal-600" />
+            Security
+          </CardTitle>
+          <CardDescription>Update the password used to sign in to your account.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handlePasswordUpdate} className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-theme-muted">New Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Minimum 6 characters"
+                minLength={6}
+                className="w-full p-2 border border-theme rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-theme-card text-theme-foreground"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-theme-muted">Confirm New Password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter your password"
+                minLength={6}
+                className="w-full p-2 border border-theme rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-theme-card text-theme-foreground"
+                required
+              />
+            </div>
+
+            {passwordError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                {passwordError}
+              </div>
+            )}
+
+            {passwordSuccess && (
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 font-medium">
+                <CheckCircle2 className="w-4 h-4" />
+                Password updated successfully.
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <Button type="submit" size="lg" disabled={passwordSaving} className="w-full sm:w-auto px-8 bg-teal-600 hover:bg-teal-700">
+                {passwordSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Update Password"}
               </Button>
             </div>
           </form>
