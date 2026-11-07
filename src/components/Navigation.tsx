@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, UserCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, UserCircle, LogOut, Target } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
 export function Navigation() {
@@ -12,6 +12,7 @@ export function Navigation() {
 
   const links = [
     { href: "/dashboard", label: "My Dashboard", icon: LayoutDashboard },
+    { href: "/goals", label: "Goal Library", icon: Target },
     { href: "/groups", label: "My Groups", icon: Users },
   ];
 
